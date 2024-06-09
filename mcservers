@@ -1,0 +1,779 @@
+#!/bin/bash
+COLUMNS=$(tput cols)
+line() {
+	if [ $# -eq 1 ]
+	then 
+		local LENGTH=$(((($COLUMNS/2) - $(expr length "$1") - 6)))
+		local RESULT=""
+		local COUNTER=1
+		while [ $COUNTER -le $LENGTH ]
+		do
+			RESULT="$RESULT="
+			COUNTER=$(( $COUNTER + 1))
+		done
+		RESULT="$RESULT> $1"
+		printf "$RESULT\n"
+	else
+		printf "[!] An invalid number of parameters was given to the 'line' function!\n"
+		exit
+	fi
+}
+line "[!] INITIALISING APPLICATION"
+APP_PATH="$HOME/MCServers"
+cd $APP_PATH
+if [ ! -d $APP_PATH ]
+then
+	if [ -e $APP_PATH ]
+	then
+		printf "[!] ERROR: "$APP_PATH" is an existing file!\n"
+		exit
+	else
+		mkdir $APP_PATH
+		printf "[!] Created application folder\n"
+	fi
+fi
+LOG_FOLDER="$APP_PATH/logs"
+if [ ! -d $LOG_FOLDER ]
+then
+	if [ -e $LOG_FOLDER ]
+	then
+		printf "[!] ERROR: "$LOG_FOLDER" is an existing file!\n"
+		exit
+	else
+		mkdir $LOG_FOLDER
+		printf "[!] Created logs folder\n"
+	fi
+fi
+APP_TIME=$(date +"%Y-%m-%d-%H-%M-%S")
+LOG_FILE="$LOG_FOLDER/$APP_TIME.log"
+if [ -e $LOG_FILE ]
+then
+	 printf "[!] ERROR: "$LOG_FILE" already exists!\n"
+	 exit
+else 
+	 touch $LOG_FILE
+	 printf "[!] Created log file\n"
+fi
+TEMPLATE_FOLDER="$APP_PATH/template"
+if [ ! -d $TEMPLATE_FOLDER ]
+then
+	if [ -e $TEMPLATE_FOLDER ]
+	then
+		printf "[!] ERROR: "$TEMPLATE_FOLDER" is an existing file!\n"
+		exit
+	else
+		mkdir $TEMPLATE_FOLDER
+		printf "[!] Created template folder\n"
+	fi
+fi
+REGITRY_FOLDER="$APP_PATH/registry"
+if [ ! -d $REGITRY_FOLDER ]
+then
+	if [ -e $REGITRY_FOLDER ]
+	then
+		printf "[!] ERROR: "$REGITRY_FOLDER" is an existing file!\n"
+		exit
+	else
+		mkdir $REGITRY_FOLDER
+		printf "[!] Created registry folder\n"
+	fi
+fi
+SERVER_FOLDER="$APP_PATH/servers"
+if [ ! -d $SERVER_FOLDER ]
+then
+	if [ -e $SERVER_FOLDER ]
+	then
+		printf "[!] ERROR: "$SERVER_FOLDER" is an existing file!\n"
+		exit
+	else
+		mkdir $SERVER_FOLDER
+		printf "[!] Created servers folder\n"
+	fi
+fi
+TRASH_FOLDER="$APP_PATH/trash"
+if [ ! -d $TRASH_FOLDER ]
+then
+	if [ -e $TRASH_FOLDER ]
+	then
+		printf "[!] ERROR: "$SERVER_FOLDER" is an existing file!\n"
+		exit
+	else
+		mkdir $TRASH_FOLDER
+		printf "[!] Created trash folder\n"
+	fi
+fi
+LAUNCH_FILE="$APP_PATH/launch"
+if [ -e $LAUNCH_FILE ]
+then
+	if [ -d $LAUNCH_FILE ]
+	then 
+		printf "[!] ERROR: "$LAUNCH_FILE" is an existing directory!\n"
+		exit
+	fi
+else
+	touch $LAUNCH_FILE
+	printf "java -Xmx8192M -Xms8192M -jar *.jar nogui" > $LAUNCH_FILE
+	printf "[!] Created launch file\n"
+fi
+out() {
+	if [ $# -eq 1 ]
+	then
+		printf "$1\n" | tee -a $LOG_FILE
+	else
+		printf "[!] An invalid number of parameters was given to the 'out' function!\n"
+		exit
+	fi
+}
+NEXT_INPUT=''
+input() {
+	if [ $# -eq 1 ]
+	then
+		printf "$1: " | tee -a $LOG_FILE
+		read INPUT
+		printf "[I] $INPUT\n" >> $LOG_FILE
+		NEXT_INPUT=$INPUT
+	else
+		printf "[!] An invalid number of parameters was given to the 'input' function!\n"
+		exit
+	fi
+}
+printf "[!] Logging is now enabled\n"
+out "$(line "STARTING MAIN APPLICATION")"
+out '  ___                   _                   _     
+ / _ \                 | |                 ( )    
+/ /_\ \ __ _  __ _  ___| | _____      _____|/ ___ 
+|  _  |/ _` |/ _` |/ _ \ |/ _ \ \ /\ / / _ \ / __|
+| | | | (_| | (_| |  __/ | (_) \ V  V /  __/ \__ \
+\_| |_/\__, |\__, |\___|_|\___/ \_/\_/ \___| |___/
+        __/ | __/ |                               
+       |___/ |___/                                
+___  ________  _____                              
+|  \/  /  __ \/  ___|                             
+| .  . | /  \/\ `--.  ___ _ ____   _____ _ __ ___ 
+| |\/| | |     `--. \/ _ \ '"'"'__\ \ / / _ \ '"'"'__/ __|
+| |  | | \__/\/\__/ /  __/ |   \ V /  __/ |  \__ \
+\_|  |_/\____/\____/ \___|_|    \_/ \___|_|  |___/
+'
+exit0() {
+	out "$(line "EXITING APPLICATION")"
+	exit
+}
+tempadd0() {
+	input "Enter file path to load"
+	if [ "@$NEXT_INPUT" = "@//" ]
+	then
+		out "Cancelling..."
+		return
+	fi
+	FILE="$NEXT_INPUT"
+	if [ -e $FILE ] 
+	then
+		if [ -d $FILE ]
+		then
+			out "ERROR: The given path is a directory!"
+		else
+			input "Enter the name of the file"
+			if [ "@$NEXT_INPUT" = "@//" ]
+			then
+				out "Cancelling..."
+				return
+			fi
+			FILE_NAME=$(tr -s '/' '-' <<< "$NEXT_INPUT")
+			FILE_PATH="$TEMPLATE_FOLDER/$FILE_NAME"
+			if [ -e "$FILE_PATH" ]
+			then
+				out "ERROR: The given file already exists"
+			else
+				cp -f  -r "$FILE" "$FILE_PATH"
+				out "File added successfully!"
+			fi
+		fi
+	else 
+		out "ERROR: The given file does not exist!"
+	fi
+}
+tempremove0() {
+	input "Enter the name of the wanted file"
+	if [ "@$NEXT_INPUT" = "@//" ]
+	then
+		out "Cancelling..."
+		return
+	fi
+	FILE_NAME=$(tr -s '/' '-' <<< "$NEXT_INPUT")
+	FILE_PATH="$TEMPLATE_FOLDER/$FILE_NAME"
+	if [ -e $FILE_PATH ]
+	then
+		if [ -d $FILE_PATH ]
+		then
+			out "ERROR: The given file is a directory!"
+		else
+			rm -f $FILE_PATH
+			out "File removed successfully!"
+		fi
+	else
+		out "ERROR: The given file does not exist!"
+	fi
+}
+register0() {
+	input "Enter file path to load"
+	if [ "@$NEXT_INPUT" = "@//" ]
+	then
+		out "Cancelling..."
+		return
+	fi
+	FILE="$NEXT_INPUT"
+	if [ -e "$FILE" ] 
+	then
+		if [ -d "$FILE" ]
+		then
+			out "ERROR: The given path is a directory!"
+		else	
+			input "Enter the name of the version"
+			if [ "@$NEXT_INPUT" = "@//" ]
+			then
+				out "Cancelling..."
+				return
+			fi
+			VERSION_NAME=$(tr -s '/' '-' <<< $(tr -s ' ' '-' <<< "$NEXT_INPUT"))
+			VERSION_PATH="$REGITRY_FOLDER/$VERSION_NAME"
+			if [ -e $VERSION_PATH ]
+			then
+				if [ -d $VERSION_PATH ]
+				then
+					out "ERROR: The given version already exists"
+				else 
+					out "ERROR: A file with the name of that version already exists"
+				fi
+			else
+				mkdir $VERSION_PATH
+				cp -f  -r "$FILE" "$VERSION_PATH/server.jar"
+				out "Version registered succesfully!"
+			fi
+		fi
+	else 
+		out "ERROR: The given file does not exist!"
+	fi
+}
+include0() {	
+	input "Enter file path to load"
+	if [ "@$NEXT_INPUT" = "@//" ]
+	then
+		out "Cancelling..."
+		return
+	fi
+	FILE="$NEXT_INPUT"
+	if [ -e "$FILE" ] 
+	then
+		if [ -d "$FILE" ]
+		then
+			out "ERROR: The given path is a directory!"
+		else	
+			input "Enter the name of the version"
+			if [ "@$NEXT_INPUT" = "@//" ]
+			then
+				out "Cancelling..."
+				return
+			fi
+			VERSION_NAME=$(tr -s '/' '-' <<< $(tr -s ' ' '-' <<< "$NEXT_INPUT"))
+			VERSION_PATH="$REGITRY_FOLDER/$VERSION_NAME"
+			if [ -e $VERSION_PATH ]
+			then
+				if [ -d $VERSION_PATH ]
+				then
+					input "Enter the name of the file"
+					if [ "@$NEXT_INPUT" = "@//" ]
+					then
+						out "Cancelling..."
+						return
+					fi
+					FILE_NAME=$(tr -s '/' '-' <<< $(tr -s ' ' '-' <<< "$NEXT_INPUT"))
+					FILE_PATH="$VERSION_PATH/$FILE_NAME"
+					if [ -e "$FILE_PATH" ]
+					then
+						out "ERROR: The given file already exists"
+					else
+						cp -f  -r "$FILE" "$FILE_PATH"
+						out "File added successfully!"
+					fi
+				else 
+					out "ERROR: A file with the name of that version already exists"
+				fi
+			else
+				out "ERROR: The given version doesn't exist!"
+			fi
+		fi
+	else 
+		out "ERROR: The given file does not exist!"
+	fi
+}
+unregister0() {	
+	input "Enter the name of the wanted version"
+	if [ "@$NEXT_INPUT" = "@//" ]
+	then
+		out "Cancelling..."
+		return
+	fi
+	VERSION_NAME=$(tr -s '/' '-' <<< $(tr -s ' ' '-' <<< "$NEXT_INPUT"))
+	VERSION_PATH="$REGITRY_FOLDER/$VERSION_NAME"
+	if [ -e "$VERSION_PATH" ]
+	then
+		if [ -d "$VERSION_PATH" ]
+		then
+			rm -f -r "$VERSION_PATH"
+			out "Version removed successfully!"
+		else
+			out "ERROR: The given version is a file!"
+		fi
+	else
+		out "ERROR: The given version does not exist!"
+	fi
+}
+run0() {
+	input "Enter the server's name"
+	if [ "@$NEXT_INPUT" = "@//" ]
+	then
+		out "Cancelling..."
+		return
+	fi
+	SERVER_NAME="$(tr -s '/' '-' <<< $(tr -s ' ' '-' <<< $NEXT_INPUT))"
+	SERVER_PATH="$SERVER_FOLDER/$SERVER_NAME"
+	if [ -e $SERVER_PATH ]
+	then
+		if [ -d $SERVER_PATH ]
+		then
+			SCRIPT_PATH="$SERVER_PATH/start.sh"
+			JAR_PATH="$SERVER_PATH/server.jar"
+			if [ -e $SCRIPT_PATH ] && ! [ -d $SCRIPT_PATH ] 
+			then
+				cd $SERVER_PATH
+				out "$(line "STARTING SERVER")\n"
+				printf "Check server for server logs!\n" >> $LOG_FILE
+				sh "$SCRIPT_PATH"
+				out "\n$(line "SERVER STOPPED")"
+				cd $APP_PATH
+			elif [ -e $JAR_PATH ]
+			then
+				if [ -d $JAR_PATH ]
+				then
+					out "ERROR: The server executable is a directory!"
+				else
+					cd $SERVER_PATH
+					out "$(line "STARTING SERVER")\n"
+					printf "Check server for server logs!\n" >> $LOG_FILE
+					bash -c "$(cat $LAUNCH_FILE)"
+					out "\n$(line "SERVER STOPPED")"
+					cd $APP_PATH
+				fi
+			else
+				out "ERROR: The server executable is missing!"
+			fi
+		else
+			out "ERROR: The given server is a file!"
+		fi
+	else
+		out "ERROR: The given server does not exist!"
+	fi
+}
+remove0() {
+	input "Enter the server's name"
+	if [ "@$NEXT_INPUT" = "@//" ]
+	then
+		out "Cancelling..."
+		return
+	fi
+	SERVER_NAME=$(tr -s '/' '-' <<< $(tr -s ' ' '-' <<< $NEXT_INPUT))
+	SERVER_PATH="$SERVER_FOLDER/$SERVER_NAME"
+	if [ -e $SERVER_PATH ]
+	then
+		if [ -d $SERVER_PATH ]
+		then
+			DELETE_PATH="$TRASH_FOLDER/$SERVER_NAME"
+			if [ -e $DELETE_PATH ]
+			then
+					rm -f -r $DELETE_PATH
+			fi
+			mv -f $SERVER_PATH $TRASH_FOLDER
+			out "Server removed successfully!"					
+		else
+			out "ERROR: The given server is a file!"
+		fi
+	else
+		out "ERROR: The given server does not exist!"
+	fi
+}
+restore0() {
+	input "Enter the server's name"
+	if [ "@$NEXT_INPUT" = "@//" ]
+	then
+		out "Cancelling..."
+		return
+	fi
+	SERVER_NAME=$(tr -s '/' '-' <<< $(tr -s ' ' '-' <<< $NEXT_INPUT))
+	SERVER_PATH="$TRASH_FOLDER/$SERVER_NAME"
+	if [ -e $SERVER_PATH ]
+	then
+		if [ -d $SERVER_PATH ]
+		then
+			mv -f $SERVER_PATH $SERVER_FOLDER
+			out "Server restored successfully!"
+		else
+			out "ERROR: The given server is a file!"
+		fi
+	else
+		out "ERROR: The given server does not exist!"
+	fi
+}
+new0() {
+	input "Enter the server's name"
+	if [ "@$NEXT_INPUT" = "@//" ]
+	then
+		out "Cancelling..."
+		return
+	fi
+	SERVER_NAME=$(tr -s '/' '-' <<< $(tr -s ' ' '-' <<< $NEXT_INPUT))
+	SERVER_PATH="$SERVER_FOLDER/$SERVER_NAME"
+	if [ -e $SERVER_PATH ]
+	then
+		if [ -d $SERVER_PATH ]
+		then
+			out "ERROR: The given name is already taken!"
+		else
+			out "ERROR: A file with the given name already exists!"
+		fi
+	else
+		input "Enter the server's version"
+		if [ "@$NEXT_INPUT" = "@//" ]
+		then
+			out "Cancelling..."
+			return
+		fi
+		SERVER_VERSION=$(tr -s '/' '-' <<< $(tr -s ' ' '-' <<< $NEXT_INPUT))
+		VERSION_PATH="$REGITRY_FOLDER/$SERVER_VERSION"
+		if [ -e $VERSION_PATH ]
+		then
+			if [ -d $VERSION_PATH ]
+			then
+				out "Constructing server directory..."
+				mkdir $SERVER_PATH
+				out "Copying version..."
+				cp -f -r $VERSION_PATH/* $SERVER_PATH
+				out "Copying template..."
+				cp -f -r $TEMPLATE_FOLDER/* $SERVER_PATH
+			else
+				out "ERROR: A file with the given name exists instead of the version!"
+			fi
+		else
+			out "ERROR: The given version doesn't exist!"
+		fi
+	fi
+}
+list0() {	
+	out "  Servers:"
+	for FILE in $SERVER_FOLDER/*
+	do
+    	if [[ -d $FILE ]]; then
+       		 out "    ${FILE##*/}"
+    	fi
+	done
+}
+trash0() {	
+	out "  Trash:"
+	for FILE in $TRASH_FOLDER/*
+	do
+    	if [[ -d $FILE ]]; then
+       		 out "    ${FILE##*/}"
+    	fi
+	done
+}
+versions0() {
+	out "  Versions:"
+	for FILE in $REGITRY_FOLDER/*
+	do
+    	if [[ -d $FILE ]]; then
+       		 out "    ${FILE##*/}"
+    	fi
+	done
+}
+template0() {
+	out "  Template files:"
+	for FILE in $TEMPLATE_FOLDER/*
+	do
+    	if [[ -f $FILE ]]; then
+       		 out "    ${FILE##*/}"
+    	fi
+	done
+}
+empty0() {
+	for FILE in $TRASH_FOLDER/*
+	do
+    	if [[ -d $FILE ]]; then
+    		rm -f -r $FILE	
+       		out "  Deleted: ${FILE##*/}"
+    	fi
+	done
+}
+setlaunch0() {
+	input "Enter file path to load"
+	if [ "@$NEXT_INPUT" = "@//" ]
+	then
+		out "Cancelling..."
+		return
+	fi
+	FILE="$NEXT_INPUT"
+	if [ -e $FILE ] 
+	then
+		if [ -d $FILE ]
+		then
+			out "ERROR: The given path is a directory!"
+		else
+			FILE_PATH="$APP_PATH/launch"
+			if [ -e "$FILE_PATH" ]
+			then
+				rm -f -r $FILE_PATH
+				out "Removed old launchfile successfully!"
+			fi
+			cp -f -r "$FILE" "$FILE_PATH"
+			out "File added successfully!"
+		fi
+	else 
+		out "ERROR: The given file does not exist!"
+	fi
+}
+create0() {	
+	input "Enter the server's name"
+	if [ "@$NEXT_INPUT" = "@//" ]
+	then
+		out "Cancelling..."
+		return
+	fi
+	SERVER_NAME="$(tr -s '/' '-' <<< $(tr -s ' ' '-' <<< $NEXT_INPUT))"
+	SERVER_PATH="$SERVER_FOLDER/$SERVER_NAME"
+	if [ -e $SERVER_PATH ]
+	then
+		if [ -d $SERVER_PATH ]
+		then
+			input "Enter the file's name"
+			if [ "@$NEXT_INPUT" = "@//" ]
+			then
+				out "Cancelling..."
+				return
+			fi
+			FILE="$(tr -s '/' '-' <<< $(tr -s ' ' '-' <<< $NEXT_INPUT))"
+			FILE_PATH="$SERVER_PATH/$FILE"
+			if [ -e $FILE_PATH ]
+			then
+				if [ -d $FILE_PATH ]
+				then
+					out "ERROR: The given file is a directory!"
+				else
+					out "ERROR: The given file already exists!"
+				fi
+			else	
+				touch $FILE_PATH
+				out "Created file succesfully!"
+				vi $FILE_PATH
+				out "Edited file succesfully!"
+			fi
+		else
+			out "ERROR: The given server is a file!"
+		fi
+	else
+		out "ERROR: The given server does not exist!"
+	fi
+}
+edit0() {	
+	input "Enter the server's name"
+	if [ "@$NEXT_INPUT" = "@//" ]
+	then
+		out "Cancelling..."
+		return
+	fi
+	SERVER_NAME="$(tr -s '/' '-' <<< $(tr -s ' ' '-' <<< $NEXT_INPUT))"
+	SERVER_PATH="$SERVER_FOLDER/$SERVER_NAME"
+	if [ -e $SERVER_PATH ]
+	then
+		if [ -d $SERVER_PATH ]
+		then
+			input "Enter the file's name"
+			if [ "@$NEXT_INPUT" = "@//" ]
+			then
+				out "Cancelling..."
+				return
+			fi
+			FILE="$(tr -s '/' '-' <<< $(tr -s ' ' '-' <<< $NEXT_INPUT))"
+			FILE_PATH="$SERVER_PATH/$FILE"
+			if [ -e $FILE_PATH ]
+			then
+				if [ -d $FILE_PATH ]
+				then
+					out "ERROR: The given file is a directory!"
+				else
+					vi $FILE_PATH
+					out "Edited file succesfully!"
+				fi
+			else
+				out "ERROR: The given file does not exist!"
+			fi
+		else
+			out "ERROR: The given server is a file!"
+		fi
+	else
+		out "ERROR: The given server does not exist!"
+	fi
+}
+view0() {
+	input "Enter the server's name"
+	if [ "@$NEXT_INPUT" = "@//" ]
+	then
+		out "Cancelling..."
+		return
+	fi
+	SERVER_NAME="$(tr -s '/' '-' <<< $(tr -s ' ' '-' <<< $NEXT_INPUT))"
+	SERVER_PATH="$SERVER_FOLDER/$SERVER_NAME"
+	if [ -e $SERVER_PATH ]
+	then
+		if [ -d $SERVER_PATH ]
+		then
+			xdg-open $SERVER_PATH
+		else
+			out "ERROR: The given server is a file!"
+		fi
+	else
+		out "ERROR: The given server does not exist!"
+	fi
+}
+help0() {
+	out "  Application commands:
+    exit	Exit the application
+    tempadd	Add a file to the server template
+    tempremove	Remove a file from the server template
+    register  	Register a new version
+    include	Put a file alongside the given version
+    unregister	Remove a registered version
+    run		Run a server
+    remove	Move a server to the server trash
+    restore	Restore a server from the server trash
+    new		Create a new server
+    list	List all servers
+    trash	List the server trash
+    versions	List the server versions
+    template	List the server template files
+    empty	Empty the server trash
+    setlaunch	Sets the lauchfile to the given file
+    create	Create and edit a file on the given server
+    edit	Edit a file on the given server
+    view	View the directory of a server on the default file manager.
+    help	Display this help message"
+}
+invalid0() {	
+	out "ERROR: Invalid command! Searching for a server..."
+	SERVER_NAME="$(tr -s '/' '-' <<< $(tr -s ' ' '-' <<< $NEXT_INPUT))"
+	SERVER_PATH="$SERVER_FOLDER/$SERVER_NAME"
+	if [ -e $SERVER_PATH ]
+	then
+		if [ -d $SERVER_PATH ]
+		then
+			SCRIPT_PATH="$SERVER_PATH/start.sh"
+			JAR_PATH="$SERVER_PATH/server.jar"
+			if [ -e $SCRIPT_PATH ] && ! [ -d $SCRIPT_PATH ] 
+			then
+				cd $SERVER_PATH
+				out "$(line "STARTING SERVER")\n"
+				printf "Check server for server logs!\n" >> $LOG_FILE
+				sh "$SCRIPT_PATH"
+				out "\n$(line "SERVER STOPPED")"
+				cd $APP_PATH
+			elif [ -e $JAR_PATH ]
+			then
+				if [ -d $JAR_PATH ]
+				then
+					out "ERROR: The server executable is a directory!"
+				else
+					cd $SERVER_PATH
+					out "$(line "STARTING SERVER")\n"
+					printf "Check server for server logs!\n" >> $LOG_FILE
+					bash -c "$(cat $LAUNCH_FILE)"
+					out "\n$(line "SERVER STOPPED")"
+					cd $APP_PATH
+				fi
+			else
+				out "ERROR: The server executable is missing!"
+			fi
+		else
+			out "ERROR: The given server is a file!"
+		fi
+	else
+		out "ERROR: The given server does not exist!"
+	fi
+}
+while true
+do
+	input 'Enter command'
+	COMMAND=$(tr -s ' ' '-' <<< $NEXT_INPUT)
+	if [ "@$COMMAND" = "@exit" ]
+	then
+		exit0
+	elif [ "@$COMMAND" = "@//" ]
+	then
+		exit0
+	elif [ "@$COMMAND" = "@tempadd" ]
+	then
+		tempadd0
+	elif [ "@$COMMAND" = "@tempremove" ]
+	then
+		tempremove0
+	elif [ "@$COMMAND" = "@register" ]
+	then
+		register0
+	elif [ "@$COMMAND" = "@include" ]
+	then
+		include0
+	elif [ "@$COMMAND" = "@unregister" ]
+	then
+		unregister0
+	elif [ "@$COMMAND" = "@run" ]
+	then
+		run0
+	elif [ "@$COMMAND" = "@remove" ]
+	then
+		remove0
+	elif [ "@$COMMAND" = "@restore" ]
+	then
+		restore0
+	elif [ "@$COMMAND" = "@new" ]
+	then
+		new0
+	elif [ "@$COMMAND" = "@list" ]
+	then
+		list0
+	elif [ "@$COMMAND" = "@trash" ]
+	then
+		trash0
+	elif [ "@$COMMAND" = "@versions" ]
+	then
+		versions0
+	elif [ "@$COMMAND" = "@template" ]
+	then
+		template0
+	elif [ "@$COMMAND" = "@empty" ]
+	then
+		empty0
+	elif [ "@$COMMAND" = "@create" ]
+	then
+		create0
+	elif [ "@$COMMAND" = "@edit" ]
+	then
+		edit0
+	elif [ "@$COMMAND" = "@view" ]
+	then
+		view0
+	elif [ "@$COMMAND" = "@setlaunch" ]
+	then
+		setlaunch0
+	elif [ "@$COMMAND" = "@help" ]
+	then
+		help0
+	else
+		invalid0
+	fi
+done
